@@ -129,7 +129,7 @@ fig_gauge = go.Figure(go.Indicator(
     domain = {'x':, 'y': [0, 1]},
     title = {'text': "Total Backlog Capital Exposed Directly to Systemic Infrastructure Shocks (Billion EUR)", 'font': {'size': 14, 'color': '#A6ACB8'}},
     gauge = {
-        'axis': {'range': [None, 30], 'tickwidth': 1, 'tickcolor': "#FFFFFF"},
+        'axis': {'range':, 'tickwidth': 1, 'tickcolor': "#FFFFFF"},
         'bar': {'color': "#FF4B4B"},
         'bgcolor': "#282D37",
         'steps': [
