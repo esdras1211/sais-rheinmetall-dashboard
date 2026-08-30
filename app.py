@@ -12,7 +12,7 @@ st.markdown("""
     div[data-testid="stMetricValue"] { color: #FFFFFF; font-size: 32px; font-weight: bold; }
     div[data-testid="stMetricLabel"] { color: #A6ACB8; font-size: 14px; }
     </style>
-    """, unsafe_allowed_html=True)
+    """, unsafe_allow_html=True)
 
 # 1. LOAD DATA ARCHITECTURE
 @st.cache_data
@@ -117,7 +117,7 @@ fig_trend.add_trace(go.Scatter(x=history_grouped['Year'], y=history_grouped['Bac
 fig_trend.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', barmode='stack', height=300)
 st.plotly_chart(fig_trend, use_container_width=True)
 
-# BOTTOM ROW: SCENARIO RISK GAUGE (FIXED SYNTAX)
+# BOTTOM ROW: SCENARIO RISK GAUGE
 st.subheader("Scenario Risk Capital Exposure Footer")
 infra_facilities = supply_energy_fact[supply_energy_fact['Risk_Category'] == 'Infrastructure']['Facility_ID'].unique()
 base_infra_backlog = backlog_fact[backlog_fact['Facility_ID'].isin(infra_facilities)]['Backlog_Value_Billion_EUR'].sum()
@@ -126,16 +126,16 @@ risk_capital = base_infra_backlog * (1 + shock_slider)
 fig_gauge = go.Figure(go.Indicator(
     mode = "gauge+number",
     value = risk_capital,
-    domain = {'x': [0, 1], 'y': [0, 1]},
+    domain = {'x':, 'y': [0, 1]},
     title = {'text': "Total Backlog Capital Exposed Directly to Systemic Infrastructure Shocks (Billion EUR)", 'font': {'size': 14, 'color': '#A6ACB8'}},
     gauge = {
-        'axis': {'range': [0, 100], 'tickwidth': 1, 'tickcolor': "#FFFFFF"},
+        'axis': {'range': [None, 30], 'tickwidth': 1, 'tickcolor': "#FFFFFF"},
         'bar': {'color': "#FF4B4B"},
         'bgcolor': "#282D37",
         'steps': [
-            {'range': [0, 30], 'color': '#388E3C'},
-            {'range': [30, 60], 'color': '#FBC02D'},
-            {'range': [60, 100], 'color': '#D32F2F'}]}))
+            {'range':, 'color': '#388E3C'},
+            {'range':, 'color': '#FBC02D'},
+            {'range':, 'color': '#D32F2F'}]}))
 
 fig_gauge.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', height=220, margin=dict(t=30, b=10))
 st.plotly_chart(fig_gauge, use_container_width=True)
