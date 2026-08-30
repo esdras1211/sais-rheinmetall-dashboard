@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 import plotly.graph_objects as go
 
 # Configure page settings to match dark theme guidelines
@@ -15,7 +14,7 @@ st.markdown("""
     </style>
     """, unsafe_allowed_html=True)
 
-# 1. LOAD DATA ARCHITECTURE FROM SECTION 1
+# 1. LOAD DATA ARCHITECTURE
 @st.cache_data
 def load_dashboard_data():
     asset_dim = pd.DataFrame([
@@ -65,9 +64,15 @@ def load_dashboard_data():
 asset_dim, backlog_fact, backlog_history_fact, supply_energy_fact = load_dashboard_data()
 
 # Process data elements using analytical model formulas
-results = supply_energy_fact.apply(calculate_supply_risk_and_color, axis=1)
-supply_energy_fact['Status'] = [r[0] for r in results]
-supply_energy_fact['HEX_Color'] = [r[1] for r in results]
+def calculate_status(row):
+    cur = row['Current_Value']
+    rmin = row['Red_Min']
+    gmax = row['Green_Max']
+    if cur >= rmin: return "CRITICAL BOTTLENECK"
+    elif cur <= gmax: return "Stable"
+    else: return "Elevated Warning"
+
+supply_energy_fact['Status'] = supply_energy_fact.apply(calculate_status, axis=1)
 critical_alerts_count = (supply_energy_fact['Status'] == 'CRITICAL BOTTLENECK').sum()
 
 # TOP ROW: HEADER ASSEMBLY
@@ -75,7 +80,7 @@ st.title("RHINEMETALL GEOPOLITICAL RISK ASSESSMENT: €80B BACKLOG BOTTLENECKS")
 st.markdown("---")
 
 # TOP ROW: Scoreboard & Slicer Parameter Layout
-col_kpi1, col_kpi2, col_slicer = st.columns([1, 1, 2])
+col_kpi1, col_kpi2, col_slicer = st.columns(3)
 
 with col_kpi1:
     st.metric(label="TOTAL BACKLOG VOLUME", value="€80.0 Billion")
@@ -85,7 +90,7 @@ with col_slicer:
     shock_slider = st.slider("COMMODITY PRICE SHOCK SIMULATION SCENARIO (% INCREASE)", min_value=0.0, max_value=1.0, step=0.1, value=0.0)
 
 # MIDDLE ROW: Grid View Configuration
-col_grid_left, col_grid_right = st.columns([1, 1])
+col_grid_left, col_grid_right = st.columns(2)
 
 with col_grid_left:
     st.subheader("Asset Profiles: Capacity Tracking")
@@ -94,44 +99,43 @@ with col_grid_left:
 
 with col_grid_right:
     st.subheader("Ezzy's Supply Chain & Energy Signpost Matrix")
-    # Apply threshold colors conditionally into matrix presentation layout
-    styled_matrix = supply_energy_fact[['Risk_Category', 'Signpost_Indicator', 'Current_Value', 'Status']].style.background_gradient(cmap='Reds', subset=['Current_Value'])
+    styled_matrix = supply_energy_fact[['Risk_Category', 'Signpost_Indicator', 'Current_Value', 'Status']]
     st.dataframe(styled_matrix, use_container_width=True, hide_index=True)
 
 st.markdown("---")
 
-# LOWER ROW: Dual-Axis Time Series Plot Tracking Inflections Since 2025
+# LOWER ROW: Historical Trend Plot
 st.subheader("Annual Backlog Accumulation Layer (2022 - 2026 Trace)")
 history_grouped = backlog_history_fact.groupby('Year')['Backlog_Value_Billion_EUR'].sum().reset_index()
 
 fig_trend = go.Figure()
-# Draw historical columns
 for division in backlog_history_fact['Business_Division'].unique():
     div_data = backlog_history_fact[backlog_history_fact['Business_Division'] == division]
     fig_trend.add_trace(go.Bar(x=div_data['Year'], y=div_data['Backlog_Value_Billion_EUR'], name=division))
-# Overlay cumulative trend line
-fig_trend.add_trace(go.Scatter(x=history_grouped['Year'], y=history_grouped['Backlog_Value_Billion_EUR'], name="Total Accumulation Trajectory", line=dict(color='#FFD13B', width=3)))
 
+fig_trend.add_trace(go.Scatter(x=history_grouped['Year'], y=history_grouped['Backlog_Value_Billion_EUR'], name="Total Accumulation Trajectory", line=dict(color='#FFD13B', width=3)))
 fig_trend.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', barmode='stack', height=300)
 st.plotly_chart(fig_trend, use_container_width=True)
 
-# BOTTOM ROW: SCENARIO RISK GAUGE
+# BOTTOM ROW: SCENARIO RISK GAUGE (FIXED SYNTAX)
 st.subheader("Scenario Risk Capital Exposure Footer")
-risk_capital = simulate_energy_price_shock(backlog_fact, supply_energy_fact, shock_slider)
+infra_facilities = supply_energy_fact[supply_energy_fact['Risk_Category'] == 'Infrastructure']['Facility_ID'].unique()
+base_infra_backlog = backlog_fact[backlog_fact['Facility_ID'].isin(infra_facilities)]['Backlog_Value_Billion_EUR'].sum()
+risk_capital = base_infra_backlog * (1 + shock_slider)
 
 fig_gauge = go.Figure(go.Indicator(
     mode = "gauge+number",
     value = risk_capital,
-    domain = {'x':, 'y': [0, 1]},
+    domain = {'x': [0, 1], 'y': [0, 1]},
     title = {'text': "Total Backlog Capital Exposed Directly to Systemic Infrastructure Shocks (Billion EUR)", 'font': {'size': 14, 'color': '#A6ACB8'}},
     gauge = {
-        'axis': {'range':, 'tickwidth': 1, 'tickcolor': "#FFFFFF"},
+        'axis': {'range': [0, 100], 'tickwidth': 1, 'tickcolor': "#FFFFFF"},
         'bar': {'color': "#FF4B4B"},
         'bgcolor': "#282D37",
         'steps': [
-            {'range':, 'color': '#388E3C'},
-            {'range':, 'color': '#FBC02D'},
-            {'range':, 'color': '#D32F2F'}]}))
+            {'range': [0, 30], 'color': '#388E3C'},
+            {'range': [30, 60], 'color': '#FBC02D'},
+            {'range': [60, 100], 'color': '#D32F2F'}]}))
 
 fig_gauge.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', height=220, margin=dict(t=30, b=10))
 st.plotly_chart(fig_gauge, use_container_width=True)
