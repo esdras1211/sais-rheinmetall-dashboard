@@ -76,7 +76,7 @@ supply_energy_fact['Status'] = supply_energy_fact.apply(calculate_status, axis=1
 critical_alerts_count = (supply_energy_fact['Status'] == 'CRITICAL BOTTLENECK').sum()
 
 # TOP ROW: HEADER ASSEMBLY
-st.title("RHINEMETALL GEOPOLITICAL RISK ASSESSMENT: €80B BACKLOG BOTTLENECKS")
+st.title("RHEINMETALL GEOPOLITICAL RISK ASSESSMENT: €80B BACKLOG BOTTLENECKS")
 st.markdown("---")
 
 # TOP ROW: Scoreboard & Slicer Parameter Layout
@@ -98,7 +98,7 @@ with col_grid_left:
     st.dataframe(profile_df[['Facility_Name', 'Country', 'Business_Division', 'Backlog_Value_Billion_EUR']], use_container_width=True, hide_index=True)
 
 with col_grid_right:
-    st.subheader("Ezzy's Supply Chain & Energy Signpost Matrix")
+    st.subheader("Supply Chain & Energy Signpost Matrix")
     styled_matrix = supply_energy_fact[['Risk_Category', 'Signpost_Indicator', 'Current_Value', 'Status']]
     st.dataframe(styled_matrix, use_container_width=True, hide_index=True)
 
@@ -126,16 +126,16 @@ risk_capital = base_infra_backlog * (1 + shock_slider)
 fig_gauge = go.Figure(go.Indicator(
     mode = "gauge+number",
     value = risk_capital,
-    domain = {'x':, 'y': [0, 1]},
+    domain = {'x': [0, 1], 'y': [0, 1]},
     title = {'text': "Total Backlog Capital Exposed Directly to Systemic Infrastructure Shocks (Billion EUR)", 'font': {'size': 14, 'color': '#A6ACB8'}},
     gauge = {
-        'axis': {'range':, 'tickwidth': 1, 'tickcolor': "#FFFFFF"},
+        'axis': {'range': [0, 50], 'tickwidth': 1, 'tickcolor': "#FFFFFF"},
         'bar': {'color': "#FF4B4B"},
         'bgcolor': "#282D37",
         'steps': [
-            {'range':, 'color': '#388E3C'},
-            {'range':, 'color': '#FBC02D'},
-            {'range':, 'color': '#D32F2F'}]}))
+            {'range': [0, 15], 'color': '#388E3C'},
+            {'range': [15, 30], 'color': '#FBC02D'},
+            {'range': [30, 50], 'color': '#D32F2F'}]}))
 
 fig_gauge.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', height=220, margin=dict(t=30, b=10))
 st.plotly_chart(fig_gauge, use_container_width=True)
